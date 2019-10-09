@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<menu>
+  <item>
+    <path>civicrm/import-donations</path>
+    <page_callback>CRM_Importdonations_Form_ImportDonations</page_callback>
+    <title>ImportDonations</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
+</menu>
