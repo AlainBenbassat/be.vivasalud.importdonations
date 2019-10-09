@@ -9,7 +9,7 @@
     <email>alain@businessandcode.eu</email>
   </maintainer>
   <urls>
-    <url desc="Documentation">http://FIXME</url>
+    <url desc="Documentation">https://github.com/AlainBenbassat/be.vivasalud.importdonations</url>
     <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
   </urls>
   <releaseDate>2019-10-09</releaseDate>

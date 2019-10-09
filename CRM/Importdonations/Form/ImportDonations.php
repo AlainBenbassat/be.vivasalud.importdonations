@@ -2,71 +2,55 @@
 
 use CRM_Importdonations_ExtensionUtil as E;
 
-/**
- * Form controller class
- *
- * @see https://wiki.civicrm.org/confluence/display/CRMDOC/QuickForm+Reference
- */
 class CRM_Importdonations_Form_ImportDonations extends CRM_Core_Form {
   public function buildQuickForm() {
+    CRM_Utils_System::setTitle('Viva Salud - import donations from accounting Excel');
 
-    // add form elements
-    $this->add(
-      'select', // field type
-      'favorite_color', // field name
-      'Favorite Color', // field label
-      $this->getColorOptions(), // list of options
-      TRUE // is required
-    );
-    $this->addButtons(array(
-      array(
+    $this->add('File', 'uploadFile', 'Account Excel file<br>(yyyymmdd yyyy rapports des dons.xlsx)', 'size=30 maxlength=255', TRUE);
+
+    $this->addButtons([
+      [
         'type' => 'submit',
-        'name' => E::ts('Submit'),
+        'name' => 'Import',
         'isDefault' => TRUE,
-      ),
-    ));
+      ],
+      [
+        'type' => 'cancel',
+        'name' => 'Cancel',
+      ],
+    ]);
 
     // export form elements
     $this->assign('elementNames', $this->getRenderableElementNames());
     parent::buildQuickForm();
   }
 
+  public function cancelAction() {
+    // redirect to the main page
+    CRM_Utils_System::redirect(CRM_Utils_System::url('civicrm', ''));
+  }
+
   public function postProcess() {
     $values = $this->exportValues();
-    $options = $this->getColorOptions();
-    CRM_Core_Session::setStatus(E::ts('You picked color "%1"', array(
-      1 => $options[$values['favorite_color']],
-    )));
+
+    // get the selected file
+    $tmpFileName = $this->_submitFiles['uploadFile']['tmp_name'];
+    if (!$tmpFileName) {
+      CRM_Core_Session::setStatus('Cannot open ' . $this->_submitFiles['uploadFile']['name'] . '. Maybe it\'s too big?', 'Error', 'error');
+    }
+    else {
+      // import the transactions
+      $importHelper = new CRM_Importdonations_ImportHelper();
+      $importHelper->import($tmpFileName);
+    }
+
     parent::postProcess();
   }
 
-  public function getColorOptions() {
-    $options = array(
-      '' => E::ts('- select -'),
-      '#f00' => E::ts('Red'),
-      '#0f0' => E::ts('Green'),
-      '#00f' => E::ts('Blue'),
-      '#f0f' => E::ts('Purple'),
-    );
-    foreach (array('1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e') as $f) {
-      $options["#{$f}{$f}{$f}"] = E::ts('Grey (%1)', array(1 => $f));
-    }
-    return $options;
-  }
 
-  /**
-   * Get the fields/elements defined in this form.
-   *
-   * @return array (string)
-   */
   public function getRenderableElementNames() {
-    // The _elements list includes some items which should not be
-    // auto-rendered in the loop -- such as "qfKey" and "buttons".  These
-    // items don't have labels.  We'll identify renderable by filtering on
-    // the 'label'.
     $elementNames = array();
     foreach ($this->_elements as $element) {
-      /** @var HTML_QuickForm_Element $element */
       $label = $element->getLabel();
       if (!empty($label)) {
         $elementNames[] = $element->getName();
