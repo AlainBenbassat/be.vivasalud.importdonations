@@ -34,14 +34,21 @@ class CRM_Importdonations_Form_ImportDonations extends CRM_Core_Form {
     $values = $this->exportValues();
 
     // get the selected file
-    $tmpFileName = $this->_submitFiles['uploadFile']['tmp_name'];
+// TIJDELIJK!!!!!!!!!!!!!!!!    $tmpFileName = $this->_submitFiles['uploadFile']['tmp_name'];
+    $tmpFileName = '/home/alain/Documents/Klanten/Viva Salud/winbooks import/20190926 2019 rapports des dons.xlsx';
+
     if (!$tmpFileName) {
       CRM_Core_Session::setStatus('Cannot open ' . $this->_submitFiles['uploadFile']['name'] . '. Maybe it\'s too big?', 'Error', 'error');
     }
     else {
       // import the transactions
-      $importHelper = new CRM_Importdonations_ImportHelper();
-      $importHelper->import($tmpFileName);
+      try {
+        $importHelper = new CRM_Importdonations_ImportHelper();
+        $importHelper->import($tmpFileName);
+      }
+      catch (Exception $e) {
+        CRM_Core_Session::setStatus($e->getMessage(), 'Import', 'error');
+      }
     }
 
     parent::postProcess();
