@@ -7,6 +7,7 @@ class CRM_Importdonations_Form_ImportDonations extends CRM_Core_Form {
     CRM_Utils_System::setTitle('Viva Salud - import donations from accounting Excel');
 
     $this->add('File', 'uploadFile', 'Account Excel file<br>(yyyymmdd yyyy rapports des dons.xlsx)', 'size=30 maxlength=255', TRUE);
+    $this->addRadio('action', 'Action', ['analytic' => 'Synchronize analytical codes', 'customers' => 'Check contacts', 'import' => 'Import donations and contacts'], NULL,'<br>', TRUE);
 
     $this->addButtons([
       [
@@ -34,8 +35,8 @@ class CRM_Importdonations_Form_ImportDonations extends CRM_Core_Form {
     $values = $this->exportValues();
 
     // get the selected file
-// TIJDELIJK!!!!!!!!!!!!!!!!    $tmpFileName = $this->_submitFiles['uploadFile']['tmp_name'];
-    $tmpFileName = '/home/alain/Documents/Klanten/Viva Salud/winbooks import/20190926 2019 rapports des dons.xlsx';
+    $tmpFileName = $this->_submitFiles['uploadFile']['tmp_name'];
+$tmpFileName = '/home/alain/Documents/Klanten/Viva Salud/winbooks import/20190926 2019 rapports des dons.xlsx';
 
     if (!$tmpFileName) {
       CRM_Core_Session::setStatus('Cannot open ' . $this->_submitFiles['uploadFile']['name'] . '. Maybe it\'s too big?', 'Error', 'error');
@@ -43,8 +44,20 @@ class CRM_Importdonations_Form_ImportDonations extends CRM_Core_Form {
     else {
       // import the transactions
       try {
-        $importHelper = new CRM_Importdonations_ImportHelper();
-        $importHelper->import($tmpFileName);
+        if ($values['action'] == 'analytic') {
+          $importHelper = new CRM_Importdonations_ImportHelper();
+          $importHelper->syncAnayliticalCodes();
+        }
+        elseif ($values['action'] == 'customers') {
+          $importHelper = new CRM_Importdonations_ImportHelper();
+          $importHelper->syncCheckCustomers();
+        }
+        elseif ($values['action'] == 'import') {
+          $importHelper = new CRM_Importdonations_ImportHelper();
+          $importHelper->import($tmpFileName);
+        }
+
+        CRM_Core_Session::setStatus('OK, check the log file for more information', 'Import', 'success');
       }
       catch (Exception $e) {
         CRM_Core_Session::setStatus($e->getMessage(), 'Import', 'error');

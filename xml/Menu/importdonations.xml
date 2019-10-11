@@ -6,4 +6,10 @@
     <title>ImportDonations</title>
     <access_arguments>access CiviCRM</access_arguments>
   </item>
+  <item>
+    <path>civicrm/import-donations/log</path>
+    <page_callback>CRM_Importdonations_Page_ImportLog</page_callback>
+    <title>ImportLog</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
 </menu>
