@@ -1,3 +1,4 @@
+<p><a href="{$mainFormURL}">&lt; Back to the import form</a></p>
 <h3>Import Log</h3>
 <div class="crm-block crm-content-block">
     <table class="crm-info-panel">
