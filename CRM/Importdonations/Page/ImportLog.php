@@ -10,7 +10,7 @@ class CRM_Importdonations_Page_ImportLog extends CRM_Core_Page {
     $this->assign('mainFormURL', $mainFormURL);
 
     // get the log
-    $dao = CRM_Core_DAO::executeQuery("select * from viva_salud_import_log order by id"); //worksheet, comment_type");
+    $dao = CRM_Core_DAO::executeQuery("select * from viva_salud_import_log order by worksheet, comment_type, id");
     $log = $dao->fetchAll();
     $this->assign('log', $log);
 
