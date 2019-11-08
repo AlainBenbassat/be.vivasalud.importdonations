@@ -12,6 +12,12 @@ class CRM_Importdonations_ImportHelper {
   private $optionGroupAct = 163;
   private $optionGroupMvt = 164;
   private $optionGroupAtt = 165;
+  private $customFieldFin = 57;
+  private $customFieldAct = 58;
+  private $customFieldMvt = 59;
+  private $customFieldAtt = 60;
+  private $customFieldMdp = 0;
+
   private $sheetHeader = [];
 
   public function __construct() {
@@ -79,8 +85,8 @@ class CRM_Importdonations_ImportHelper {
     $this->readColumnHeader($worksheetTransit, 'transit');
 
     // validate the sheets
-    $this->validateSheetHeader($worksheetDonors,  ['NUMBER', 'ADRESS1']);
-    $this->validateSheetHeader($worksheetTransit, ['DATE', 'COMMENT', 'NAME', 'AMOUNTEUR', 'ACCOUNTGL']);
+    $this->validateSheetHeader($worksheetDonors,  'donateurs', ['NUMBER', 'ADRESS1']);
+    $this->validateSheetHeader($worksheetTransit, 'transit', ['DATE', 'COMMENT', 'NAME', 'AMOUNTEUR', 'ACCOUNTGL']);
 
     // delete donations within the range of the worksheet
     $this->deleteExistingDonations($worksheetTransit);
@@ -97,7 +103,7 @@ class CRM_Importdonations_ImportHelper {
    */
   private function importTransit($worksheetTransit, $worksheetDonors) {
     $i = 2;
-    while (($winbooksCode = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'Trs(ZONANA5)')) != '') {
+    while (($winbooksCode = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'Trs(ZONANA5)')) != '' && $i < 50) {
       // make sure we have a value in the column "comment"
       if ($this->getCellValueByColName($worksheetTransit, 'transit', $i, 'COMMENT') != '') {
         // lookup the contact
@@ -109,25 +115,63 @@ class CRM_Importdonations_ImportHelper {
         if ($contact['count'] == 0) {
           // create the contact
           $contactID = $this->createContact($worksheetDonors, $winbooksCode);
+
+          // check return code
+          if ($contactID == -1) {
+            // creation error, skip
+            $i++;
+            continue;
+          }
         }
         else {
           $contactID = $contact['values'][0]['id'];
         }
 
-          $date = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'DATE');
-          // convert to YYYY-MM-DD
-          $dateParts = explode('/', $date);
-          $formattedDate = $dateParts[2] . '-' . sprintf("%02d", $dateParts[0]) . '-' . sprintf("%02d", $dateParts[1]);
+        $date = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'DATE');
+        // convert to YYYY-MM-DD
+        $dateParts = explode('/', $date);
+        $formattedDate = $dateParts[2] . '-' . sprintf("%02d", $dateParts[0]) . '-' . sprintf("%02d", $dateParts[1]);
 
-          $params = [
-            'contact_id' => $contactID,
-            'source' => $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'NAME'),
-            'total_amount' => str_replace('-', '', $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'AMOUNTEUR')),
-            'receive_date' => $formattedDate,
-            'contribution_status_id' => 1, // completed
-            'financial_type_id' => $this->winbooksFinancialType,
-          ];
-          civicrm_api3('Contribution', 'create', $params);
+        $params = [
+          'contact_id' => $contactID,
+          'source' => $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'NAME'),
+          'total_amount' => str_replace(',', '', str_replace('-', '', $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'AMOUNTEUR'))),
+          'receive_date' => $formattedDate,
+          'contribution_status_id' => 1, // completed
+          'financial_type_id' => $this->winbooksFinancialType,
+        ];
+        $contrib = civicrm_api3('Contribution', 'create', $params);
+
+        // add the custom fields
+        $val = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'Mvt(ZONANA3)');
+        civicrm_api3('CustomValue', 'create', [
+          'entity_id' => $contrib['id'],
+          'entity_table' => 'civicrm_contribution',
+          'custom_' . $this->customFieldMvt => [$val],
+        ]);
+
+        $val = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'Fin(ZONANA1)');
+        civicrm_api3('CustomValue', 'create', [
+          'entity_id' => $contrib['id'],
+          'entity_table' => 'civicrm_contribution',
+          'custom_' . $this->customFieldFin => [$val],
+        ]);
+
+        $val = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'Act(ZONANA2)');
+        civicrm_api3('CustomValue', 'create', [
+          'entity_id' => $contrib['id'],
+          'entity_table' => 'civicrm_contribution',
+          'custom_' . $this->customFieldAct => [$val],
+        ]);
+
+        $val = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'Att(ZONANA6)');
+        if ($val) {
+          civicrm_api3('CustomValue', 'create', [
+            'entity_id' => $contrib['id'],
+            'entity_table' => 'civicrm_contribution',
+            'custom_' . $this->customFieldAtt => $val,
+          ]);
+        }
       }
 
       $i++;
@@ -179,13 +223,13 @@ class CRM_Importdonations_ImportHelper {
     $lowestDate = '3000-01-01';
     $highestDate = '1000-01-01';
     $i = 2;
-    while (($date = $this->getCellValueByColName($worksheet, 'transit', $i, 'ACCOUNTGL')) != '') {
+    while (($date = $this->getCellValueByColName($worksheet, 'transit', $i, 'DATE')) != '') {
       // convert to YYYY-MM-DD
       $dateParts = explode('/', $date);
       $formattedDate = $dateParts[2] . '-' . sprintf("%02d", $dateParts[0]) . '-' . sprintf("%02d", $dateParts[1]);
 
       // make sure we have a value in the column "comment"
-      if ($this->getCellValueByColName($worksheet, 'transit', $i, 'DATE') != '') {
+      if ($this->getCellValueByColName($worksheet, 'transit', $i, 'COMMENT') != '') {
         if ($formattedDate < $lowestDate) {
           $lowestDate = $formattedDate;
         }
@@ -282,14 +326,18 @@ class CRM_Importdonations_ImportHelper {
         $found = TRUE;
         break;
       }
+
+      $i++;
     }
 
     if ($found == FALSE) {
-      throw new Exception("Cannot find $winbooksCode in 'donateurs'");
+      $this->logComment('donateurs', '', "Donor not found", "$winbooksCode exists in transit but not on donateurs");
+      return -1;
     }
 
     $params = [
       'sequential' => 1,
+      'external_identifier' => $winbooksCode,
     ];
 
     // determine the contact type
@@ -298,7 +346,7 @@ class CRM_Importdonations_ImportHelper {
     $params['contact_type'] = $contactType;
 
     // get the name
-    $contactName = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'NUMBER');
+    $contactName = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'NAME1');
     if ($contactType == 'Individual') {
       $names = $this->getFirstNameLastName($contactName);
       $params['first_name'] = $names['first_name'];
@@ -324,9 +372,53 @@ class CRM_Importdonations_ImportHelper {
     }
 
     // add address
+    $address1 = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'ADRESS1');
+    $address2 = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'ADRESS2');
+    $country = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'COUNTRY');
 
+    // take only Belgians with an address
+    if ($country == 'BE' && ($address1 || $address2)) {
+      $params['api.address.create'] = [
+        'location_type_id' => 1,
+      ];
 
-    return $contactID;
+      // sometimes only address2 is filled in
+      if ($address1 && $address2) {
+        $params['api.address.create']['street_address'] = $address1;
+        $params['api.address.create']['supplemental_address_1'] = $address2;
+      }
+      else {
+        $params['api.address.create']['street_address'] = $address1 ? $address1 : $address2;
+      }
+
+      // get postal code and remove the country prefix from the postal code, that's old school
+      $postalCode = $address1 = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'ZIPCODE');
+      $postalCode = str_replace($country . '-', '', $postalCode);
+      if ($postalCode) {
+        $params['api.address.create']['postal_code'] = $postalCode;
+      }
+
+      // get the city
+      $city = $address1 = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'CITY');
+      if ($city) {
+        $params['api.address.create']['city'] = $city;
+      }
+
+      // add country Belgium
+      $params['api.address.create']['country'] = 1020;
+    }
+
+    // create the contact
+    try {
+      $contact = civicrm_api3('Contact', 'create', $params);
+      $this->logComment('donateurs', '', "Created $contactType", "$contactName, $winbooksCode");
+    }
+    catch (Exception $e) {
+      $this->logComment('donateurs', '', "Failed creation of $contactType", "$contactName, $winbooksCode: " . $e->getMessage());
+      return -1;
+    }
+    // return the contact ID
+    return $contact['id'];
   }
 
   private function getFirstNameLastName($contactName) {
@@ -433,7 +525,6 @@ class CRM_Importdonations_ImportHelper {
       $og = civicrm_api3('OptionGroup', 'create', $params);
       $this->optionGroupMdp = $og['id'];
     }
-
   }
 
   private function getCellValue($worksheet, $row, $col) {
