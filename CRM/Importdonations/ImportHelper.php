@@ -5,6 +5,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 require_once __DIR__ . '/../../PhpSpreadsheet/vendor/autoload.php';
 
 class CRM_Importdonations_ImportHelper {
+  private $IMPORT_LIMIT = 50; // TODO: change in production!!!
   private $logTable = 'viva_salud_import_log';
   private $winbooksFinancialType = 0;
   private $optionGroupMdp = 0;
@@ -103,7 +104,7 @@ class CRM_Importdonations_ImportHelper {
    */
   private function importTransit($worksheetTransit, $worksheetDonors) {
     $i = 2;
-    while (($winbooksCode = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'Trs(ZONANA5)')) != '' && $i < 50) {
+    while (($winbooksCode = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'Trs(ZONANA5)')) != '' && $i < $this->IMPORT_LIMIT) {
       // make sure we have a value in the column "comment"
       if ($this->getCellValueByColName($worksheetTransit, 'transit', $i, 'COMMENT') != '') {
         // lookup the contact
@@ -170,6 +171,15 @@ class CRM_Importdonations_ImportHelper {
             'entity_id' => $contrib['id'],
             'entity_table' => 'civicrm_contribution',
             'custom_' . $this->customFieldAtt => $val,
+          ]);
+        }
+
+        $val = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'Mdp(ZONANA4)');
+        if ($val) {
+          civicrm_api3('CustomValue', 'create', [
+            'entity_id' => $contrib['id'],
+            'entity_table' => 'civicrm_contribution',
+            'custom_' . $this->customFieldMdp => $val,
           ]);
         }
       }
@@ -522,8 +532,37 @@ class CRM_Importdonations_ImportHelper {
     catch (Exception $e) {
       // doesn't exist, create it
       $params['title'] = 'Betaalmethode';
+      $params['is_reserved'] = 0;
       $og = civicrm_api3('OptionGroup', 'create', $params);
       $this->optionGroupMdp = $og['id'];
+    }
+
+    // make sure the custom field "payment method" exists
+    $params = [
+      'sequential' => 1,
+      'custom_group_id' => 'Espadon_contributie',
+      'name' => 'payment_method_mdp',
+    ];
+    try {
+      $cf = civicrm_api3('CustomField', 'getsingle', $params);
+      $this->customFieldMdp = $cf['id'];
+    }
+    catch (Exception $e) {
+      // doesn't exist, create it
+      $params['label'] = 'Betaalmethode (Mdp)';
+      $params['data_type'] = 'String';
+      $params['html_type'] = 'Select';
+      $params['is_searchable'] = '1';
+      $params['column_name'] = $params['name'];
+      $params['weight'] = 50;
+      $params['option_group_id'] = $this->optionGroupMdp;
+      $params['note_columns'] = 60;
+      $params['note_rows'] = 4;
+      $params['text_length'] = 255;
+
+      //$this->optionGroupMdp
+      $cf = civicrm_api3('CustomField', 'create', $params);
+      $this->customFieldMdp = $cf['id'];
     }
   }
 
