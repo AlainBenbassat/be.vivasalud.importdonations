@@ -1,6 +1,6 @@
 {* HEADER *}
 
-<div class="crm-submit-buttons">
+
 {* FIELD EXAMPLE: OPTION 1 (AUTOMATIC LAYOUT) *}
 
 {foreach from=$elementNames item=elementName}
