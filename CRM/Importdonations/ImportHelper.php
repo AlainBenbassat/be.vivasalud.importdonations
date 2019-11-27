@@ -192,7 +192,7 @@ class CRM_Importdonations_ImportHelper {
    * @param Worksheet $worksheet
    */
   private function logDonorDifferences($worksheet) {
-    $i = 3; // TODO: IS THIS ALWAYS LIKE THIS?????
+    $i = 2;
 
     while (($winbooksCode = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'NUMBER')) != '') {
       // lookup the contact
@@ -330,7 +330,7 @@ class CRM_Importdonations_ImportHelper {
   private function createContact($worksheet, $winbooksCode) {
     // lookup the contact in the donor list
     $found = FALSE;
-    $i = 3;
+    $i = 2;
     while (($excelWinbooksCode = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'NUMBER')) != '') {
       if ($excelWinbooksCode == $winbooksCode) {
         $found = TRUE;

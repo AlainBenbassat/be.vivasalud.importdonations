@@ -1,6 +1,5 @@
 /tests/codeCoverage
 /analysis
-/vendor/
 /phpunit.xml
 
 ## IDE support
