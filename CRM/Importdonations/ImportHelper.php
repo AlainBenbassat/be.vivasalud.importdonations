@@ -5,7 +5,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 require_once __DIR__ . '/../../PhpSpreadsheet/vendor/autoload.php';
 
 class CRM_Importdonations_ImportHelper {
-  private $IMPORT_LIMIT = 50; // TODO: change in production!!!
+  private $IMPORT_LIMIT = 20000; // TODO: change in production!!!
   private $logTable = 'viva_salud_import_log';
   private $winbooksFinancialType = 0;
   private $optionGroupMdp = 0;
@@ -252,11 +252,11 @@ class CRM_Importdonations_ImportHelper {
 
     // delete all contributions of type "winbooks" between these dates
     $sql = "
-      delete from 
-        civicrm_contribution 
+      delete from
+        civicrm_contribution
       where
         receive_date between '$lowestDate 00:00' and '$highestDate 23:59'
-      and 
+      and
         financial_type_id = {$this->winbooksFinancialType}
     ";
     CRM_Core_DAO::executeQuery($sql);
