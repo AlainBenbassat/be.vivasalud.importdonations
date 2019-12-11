@@ -131,7 +131,7 @@ class CRM_Importdonations_ImportHelper {
         $date = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'DATE');
         // convert to YYYY-MM-DD
         $dateParts = explode('/', $date);
-        $formattedDate = $dateParts[2] . '-' . sprintf("%02d", $dateParts[0]) . '-' . sprintf("%02d", $dateParts[1]);
+        $formattedDate = $dateParts[2] . '-' . sprintf("%02d", $dateParts[1]) . '-' . sprintf("%02d", $dateParts[0]);
 
         $params = [
           'contact_id' => $contactID,
@@ -236,7 +236,7 @@ class CRM_Importdonations_ImportHelper {
     while (($date = $this->getCellValueByColName($worksheet, 'transit', $i, 'DATE')) != '') {
       // convert to YYYY-MM-DD
       $dateParts = explode('/', $date);
-      $formattedDate = $dateParts[2] . '-' . sprintf("%02d", $dateParts[0]) . '-' . sprintf("%02d", $dateParts[1]);
+      $formattedDate = $dateParts[2] . '-' . sprintf("%02d", $dateParts[1]) . '-' . sprintf("%02d", $dateParts[0]);
 
       // make sure we have a value in the column "comment"
       if ($this->getCellValueByColName($worksheet, 'transit', $i, 'COMMENT') != '') {
@@ -566,6 +566,13 @@ class CRM_Importdonations_ImportHelper {
     }
   }
 
+  /**
+   * @param Worksheet $worksheet
+   * @param $row
+   * @param $col
+   *
+   * @return string
+   */
   private function getCellValue($worksheet, $row, $col) {
     // return trimmed cell value
     return trim($worksheet->getCellByColumnAndRow($col, $row)->getFormattedValue());
