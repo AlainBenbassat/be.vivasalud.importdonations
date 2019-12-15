@@ -5,7 +5,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 require_once __DIR__ . '/../../PhpSpreadsheet/vendor/autoload.php';
 
 class CRM_Importdonations_ImportHelper {
-  private $IMPORT_LIMIT = 20000; // TODO: change in production!!!
+  private $IMPORT_LIMIT = 200000; // TODO: change in production!!!
   private $logTable = 'viva_salud_import_log';
   private $winbooksFinancialType = 0;
   private $optionGroupMdp = 0;
@@ -128,16 +128,14 @@ class CRM_Importdonations_ImportHelper {
           $contactID = $contact['values'][0]['id'];
         }
 
-        $date = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'DATE');
-        // convert to YYYY-MM-DD
-        $dateParts = explode('/', $date);
-        $formattedDate = $dateParts[2] . '-' . sprintf("%02d", $dateParts[1]) . '-' . sprintf("%02d", $dateParts[0]);
+        $excelDate = $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'DATE');
+        $phpDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelDate);
 
         $params = [
           'contact_id' => $contactID,
           'source' => $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'NAME'),
           'total_amount' => str_replace(',', '', str_replace('-', '', $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'AMOUNTEUR'))),
-          'receive_date' => $formattedDate,
+          'receive_date' => $phpDate->format('Y-m-d'),
           'contribution_status_id' => 1, // completed
           'financial_type_id' => $this->winbooksFinancialType,
         ];
@@ -233,10 +231,9 @@ class CRM_Importdonations_ImportHelper {
     $lowestDate = '3000-01-01';
     $highestDate = '1000-01-01';
     $i = 2;
-    while (($date = $this->getCellValueByColName($worksheet, 'transit', $i, 'DATE')) != '') {
-      // convert to YYYY-MM-DD
-      $dateParts = explode('/', $date);
-      $formattedDate = $dateParts[2] . '-' . sprintf("%02d", $dateParts[1]) . '-' . sprintf("%02d", $dateParts[0]);
+    while (($excelDate = $this->getCellValueByColName($worksheet, 'transit', $i, 'DATE')) != '') {
+      $phpDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excelDate);
+      $formattedDate = $phpDate->format('Y-m-d');
 
       // make sure we have a value in the column "comment"
       if ($this->getCellValueByColName($worksheet, 'transit', $i, 'COMMENT') != '') {
@@ -575,7 +572,7 @@ class CRM_Importdonations_ImportHelper {
    */
   private function getCellValue($worksheet, $row, $col) {
     // return trimmed cell value
-    return trim($worksheet->getCellByColumnAndRow($col, $row)->getFormattedValue());
+    return trim($worksheet->getCellByColumnAndRow($col, $row)->getValue()); //  ->getFormattedValue());
   }
 
   private function getCellValueByColName($worksheet, $worksheetName, $row, $colName) {
