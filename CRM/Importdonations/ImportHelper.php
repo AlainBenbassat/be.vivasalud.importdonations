@@ -134,7 +134,7 @@ class CRM_Importdonations_ImportHelper {
         $params = [
           'contact_id' => $contactID,
           'source' => $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'NAME'),
-          'total_amount' => str_replace(',', '', str_replace('-', '', $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'AMOUNTEUR'))),
+          'total_amount' => str_replace(',', '', $this->getCellValueByColName($worksheetTransit, 'transit', $i, 'AMOUNTEUR')) * -1,
           'receive_date' => $phpDate->format('Y-m-d'),
           'contribution_status_id' => 1, // completed
           'financial_type_id' => $this->winbooksFinancialType,
