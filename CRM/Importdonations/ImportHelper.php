@@ -383,8 +383,7 @@ class CRM_Importdonations_ImportHelper {
     $address2 = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'ADRESS2');
     $country = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'COUNTRY');
 
-    // take only Belgians with an address
-    if ($country == 'BE' && ($address1 || $address2)) {
+    if ($address1 || $address2) {
       $params['api.address.create'] = [
         'location_type_id' => 1,
       ];
@@ -406,13 +405,13 @@ class CRM_Importdonations_ImportHelper {
       }
 
       // get the city
-      $city = $address1 = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'CITY');
+      $city = $this->getCellValueByColName($worksheet, 'donateurs', $i, 'CITY');
       if ($city) {
         $params['api.address.create']['city'] = $city;
       }
 
-      // add country Belgium
-      $params['api.address.create']['country'] = 1020;
+      // add country
+      $params['api.address.create']['country'] = $this->getCiviCountryId($country);
     }
 
     // create the contact
@@ -426,6 +425,24 @@ class CRM_Importdonations_ImportHelper {
     }
     // return the contact ID
     return $contact['id'];
+  }
+
+  private function getCiviCountryId($country) {
+    if ($country == 'BE' || empty($country)) {
+      return 1020;
+    }
+
+    $sql = "select id from civicrm_country where iso_code = %1";
+    $sqlParams = [
+      1 => [$country, 'String'],
+    ];
+
+    $countryId = CRM_Core_DAO::singleValueQuery($sql, $sqlParams);
+    if ($countryId) {
+      return $countryId;
+    }
+
+    return 1020;
   }
 
   private function getFirstNameLastName($contactName) {
