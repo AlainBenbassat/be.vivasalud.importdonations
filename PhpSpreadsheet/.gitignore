@@ -1,9 +1,0 @@
-/tests/codeCoverage
-/analysis
-/phpunit.xml
-
-## IDE support
-*.buildpath
-*.project
-/.settings
-/.idea

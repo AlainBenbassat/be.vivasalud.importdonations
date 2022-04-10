@@ -2,8 +2,6 @@
 
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-require_once __DIR__ . '/../../PhpSpreadsheet/vendor/autoload.php';
-
 class CRM_Importdonations_ImportHelper {
   private $IMPORT_LIMIT = 200000; // TODO: change in production!!!
   private $logTable = 'viva_salud_import_log';
