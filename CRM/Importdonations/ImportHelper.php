@@ -357,11 +357,8 @@ class CRM_Importdonations_ImportHelper {
       $params['first_name'] = $names['first_name'];
       $params['last_name'] = $names['last_name'];
     }
-    elseif ($contactType == 'Organization') {
-      $params['organization_name'] = $contactName;
-    }
     else {
-      $params['household_name'] = $contactName;
+      $params['organization_name'] = $contactName;
     }
 
     // add preferred language
@@ -480,7 +477,7 @@ class CRM_Importdonations_ImportHelper {
         $retval = 'Organization';
         break;
       default:
-        $retval = 'Household';
+        $retval = 'Individual';
     }
 
     return $retval;
