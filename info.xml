@@ -16,17 +16,19 @@
   <version>v1.1</version>
   <develStage>beta</develStage>
   <compatibility>
-    <ver>5.0</ver>
+    <ver>5.27</ver>
   </compatibility>
   <comments/>
   <civix>
     <namespace>CRM/Importdonations</namespace>
-    <format>22.10.0</format>
+    <format>25.01.1</format>
   </civix>
   <mixins>
     <mixin>menu-xml@1.0.0</mixin>
+    <mixin>smarty-v2@1.0.3</mixin>
   </mixins>
   <classloader>
     <psr0 prefix="CRM_" path="."/>
+    <psr4 prefix="Civi\" path="Civi"/>
   </classloader>
 </extension>
